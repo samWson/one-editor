@@ -28,11 +28,17 @@ impl fmt::Display for GapBuffer {
     }
 }
 
-#[test]
-fn initialized_empty() {
-    let buffer = GapBuffer::new();
+#[cfg(test)]
+mod tests {
+    use GapBuffer;
+    use DEFAULT_BUFFER_CAPACITY;
 
-    assert_eq!(buffer.capacity(), DEFAULT_BUFFER_CAPACITY);
-    assert_eq!(buffer.len(), 0);
-    assert_eq!(buffer.to_string(), "")
+    #[test]
+    fn initialized_empty() {
+        let buffer = GapBuffer::new();
+
+        assert_eq!(buffer.capacity(), DEFAULT_BUFFER_CAPACITY);
+        assert_eq!(buffer.len(), 0);
+        assert_eq!(buffer.to_string(), "")
+    }
 }
