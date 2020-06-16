@@ -26,6 +26,10 @@ impl GapBuffer {
     fn len(&self) -> usize {
         self.buffer.len()
     }
+
+    fn insert(&mut self, byte: u8) {
+        self.buffer.push(byte)
+    }
 }
 
 impl fmt::Display for GapBuffer {
@@ -58,5 +62,20 @@ mod tests {
 
         assert_eq!(buffer.len(), TEST_STRING.len());
         assert_eq!(buffer.to_string(), TEST_STRING);
+    }
+
+    #[test]
+    fn insert_into_empty_buffer() {
+        let mut buffer = GapBuffer::new();
+        let characters = String::from("The q").into_bytes();
+        let expected_length = characters.len();
+
+        for character in characters {
+            buffer.insert(character);
+        }
+
+        assert_eq!(buffer.capacity(), DEFAULT_BUFFER_CAPACITY);
+        assert_eq!(buffer.len(), expected_length);
+        assert_eq!(buffer.to_string(), "The q");
     }
 }
