@@ -78,4 +78,19 @@ mod tests {
         assert_eq!(buffer.len(), expected_length);
         assert_eq!(buffer.to_string(), "The q");
     }
+
+    #[test]
+    fn insert_into_buffer_with_contents() {
+        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let characters = String::from(" And the fence.");
+        let expected_length = characters.len() + TEST_STRING.len();
+        let expected_string = TEST_STRING.to_owned() + &characters;
+
+        for character in characters.into_bytes() {
+            buffer.insert(character);
+        }
+
+        assert_eq!(buffer.len(), expected_length);
+        assert_eq!(buffer.to_string(), expected_string);
+    }
 }
