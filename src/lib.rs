@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Range;
 
 const DEFAULT_BUFFER_CAPACITY: usize = 10;
 
@@ -34,6 +35,10 @@ impl GapBuffer {
     fn remove(&mut self, index: usize) -> u8 {
         self.buffer.remove(index)
     }
+
+    fn remove_range(&mut self, range: Range<usize>) -> Vec<u8> {
+        self.buffer.drain(range).collect()
+    }
 }
 
 impl fmt::Display for GapBuffer {
@@ -50,6 +55,16 @@ mod tests {
     const TEST_STRING: &str = r"The quick brown
     fox jumped over
     the lazy dog.";
+
+    fn assert_bytes_eq(left: Vec<u8>, right: Vec<u8>) {
+        let debug_message = format!(
+            "Left: '{}'; Right: '{}'",
+            std::str::from_utf8(&left).unwrap(),
+            std::str::from_utf8(&right).unwrap()
+        );
+
+        assert_eq!(left, right, "{}", debug_message);
+    }
 
     #[test]
     fn initialized_empty() {
@@ -129,6 +144,17 @@ mod tests {
         expected_string.remove(14);
 
         assert_eq!(buffer.remove(14), n);
+        assert_eq!(buffer.to_string(), expected_string);
+    }
+
+    #[test]
+    fn remove_range_from_buffer() {
+        let expected_bytes = "quick ".as_bytes().to_vec();
+        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let mut expected_string = TEST_STRING.to_owned();
+        expected_string.drain(4..10);
+
+        assert_bytes_eq(buffer.remove_range(4..10), expected_bytes);
         assert_eq!(buffer.to_string(), expected_string);
     }
 }
