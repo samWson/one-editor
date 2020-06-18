@@ -30,6 +30,10 @@ impl GapBuffer {
     fn insert(&mut self, index: usize, byte: u8) {
         self.buffer.insert(index, byte)
     }
+
+    fn remove(&mut self, index: usize) -> u8 {
+        self.buffer.remove(index)
+    }
 }
 
 impl fmt::Display for GapBuffer {
@@ -114,6 +118,17 @@ mod tests {
         }
 
         assert_eq!(buffer.len(), expected_length);
+        assert_eq!(buffer.to_string(), expected_string);
+    }
+
+    #[test]
+    fn remove_from_buffer() {
+        let n: u8 = 0x006e;
+        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let mut expected_string = TEST_STRING.to_owned();
+        expected_string.remove(14);
+
+        assert_eq!(buffer.remove(14), n);
         assert_eq!(buffer.to_string(), expected_string);
     }
 }
