@@ -43,7 +43,7 @@ impl GapBuffer {
         self.buffer.remove(index)
     }
 
-    fn remove_range(&mut self, range: Range<usize>) -> Vec<u8> {
+    fn remove_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
         self.buffer.drain(range).collect()
     }
 }
@@ -168,13 +168,13 @@ mod tests {
     }
 
     #[test]
-    fn remove_range_from_buffer() {
+    fn remove_bytes_from_buffer() {
         let expected_bytes = "quick ".as_bytes().to_vec();
         let mut buffer = GapBuffer::from(TEST_STRING.to_string());
         let mut expected_string = TEST_STRING.to_owned();
         expected_string.drain(4..10);
 
-        assert_bytes_eq(buffer.remove_range(4..10), expected_bytes);
+        assert_bytes_eq(buffer.remove_bytes(4..10), expected_bytes);
         assert_eq!(buffer.to_string(), expected_string);
     }
 }
