@@ -60,8 +60,8 @@ mod tests {
     use DEFAULT_BUFFER_CAPACITY;
 
     const TEST_STRING: &str = r"The quick brown
-    fox jumped over
-    the lazy dog.";
+fox jumped over
+the lazy dog.";
 
     fn assert_bytes_eq(left: Vec<u8>, right: Vec<u8>) {
         let debug_message = format!(
@@ -140,6 +140,25 @@ mod tests {
         }
 
         assert_eq!(buffer.len(), expected_length);
+        assert_eq!(buffer.to_string(), expected_string);
+    }
+
+    #[test]
+    fn insert_into_buffer() {
+        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let s: u8 = 0x0073;
+        let index = 42;
+
+        let mut expected_string = TEST_STRING.to_owned();
+        let byte = vec![s];
+        let character = std::str::from_utf8(&byte).unwrap();
+        expected_string.insert_str(
+            index,
+            character
+        );
+
+        buffer.insert(index, s);
+
         assert_eq!(buffer.to_string(), expected_string);
     }
 
