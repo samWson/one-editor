@@ -32,6 +32,13 @@ impl GapBuffer {
         self.buffer.insert(index, byte)
     }
 
+    fn insert_bytes(&mut self, mut index: usize, bytes: Vec<u8>) {
+        for byte in bytes {
+            self.buffer.insert(index, byte);
+            index += 1;
+        }
+    }
+
     fn remove(&mut self, index: usize) -> u8 {
         self.buffer.remove(index)
     }
@@ -133,6 +140,19 @@ mod tests {
         }
 
         assert_eq!(buffer.len(), expected_length);
+        assert_eq!(buffer.to_string(), expected_string);
+    }
+
+    #[test]
+    fn insert_bytes_into_buffer() {
+        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let characters = String::from("tan ");
+        let index = 10;
+        let mut expected_string = TEST_STRING.to_owned();
+        expected_string.insert_str(index, &characters);
+
+        buffer.insert_bytes(index, characters.into_bytes());
+
         assert_eq!(buffer.to_string(), expected_string);
     }
 
