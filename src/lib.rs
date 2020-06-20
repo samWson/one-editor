@@ -91,23 +91,6 @@ the lazy dog.";
     }
 
     #[test]
-    fn insert_into_empty_buffer() {
-        let mut buffer = GapBuffer::new();
-        let characters = String::from("The q").into_bytes();
-        let expected_length = characters.len();
-
-        let mut index = 0;
-        for character in characters {
-            buffer.insert(index, character);
-            index += 1;
-        }
-
-        assert_eq!(buffer.capacity(), DEFAULT_BUFFER_CAPACITY);
-        assert_eq!(buffer.len(), expected_length);
-        assert_eq!(buffer.to_string(), "The q");
-    }
-
-    #[test]
     fn insert_into_buffer_at_end_of_contents() {
         let mut buffer = GapBuffer::from(TEST_STRING.to_string());
         let characters = String::from(" And the fence.");
@@ -115,25 +98,6 @@ the lazy dog.";
         let expected_string = TEST_STRING.to_owned() + &characters;
 
         let mut index = buffer.len();
-        for character in characters.into_bytes() {
-            buffer.insert(index, character);
-            index += 1;
-        }
-
-        assert_eq!(buffer.len(), expected_length);
-        assert_eq!(buffer.to_string(), expected_string);
-    }
-
-    #[test]
-    fn insert_into_buffer_within_contents() {
-        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
-        let characters = String::from("tan ");
-        let expected_length = characters.len() + TEST_STRING.len();
-        let mut expected_string = TEST_STRING.to_owned();
-
-        let mut index = 10;
-        expected_string.insert_str(index, &characters);
-
         for character in characters.into_bytes() {
             buffer.insert(index, character);
             index += 1;
