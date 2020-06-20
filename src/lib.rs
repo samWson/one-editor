@@ -91,19 +91,16 @@ the lazy dog.";
     }
 
     #[test]
-    fn insert_into_buffer_at_end_of_contents() {
+    fn insertion_into_full_buffer_allocates_more_capacity() {
         let mut buffer = GapBuffer::from(TEST_STRING.to_string());
+        let capacity_before_insertion = buffer.capacity();
         let characters = String::from(" And the fence.");
-        let expected_length = characters.len() + TEST_STRING.len();
         let expected_string = TEST_STRING.to_owned() + &characters;
+        let index = buffer.len();
 
-        let mut index = buffer.len();
-        for character in characters.into_bytes() {
-            buffer.insert(index, character);
-            index += 1;
-        }
+        buffer.insert_bytes(index, characters.into_bytes());
 
-        assert_eq!(buffer.len(), expected_length);
+        assert!(buffer.capacity() > capacity_before_insertion);
         assert_eq!(buffer.to_string(), expected_string);
     }
 
