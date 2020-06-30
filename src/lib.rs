@@ -48,8 +48,6 @@ impl GapBuffer {
         self.buffer.capacity()
     }
 
-    // BUG: length should be how many items the buffer contains. This does not inclue the gap which is invisible to the user.
-    // length should work with the user coordinates.
     fn len(&self) -> usize {
         let gap_length = self.gap_end - self.gap_start;
         self.buffer.len() - gap_length
@@ -84,9 +82,7 @@ impl GapBuffer {
         }
     }
 
-    // TODO: move the gap for insert, insert_bytes, remove, and remove_bytes.
-    fn insert(&mut self, byte: u8) {
-        // TODO: More tests for point at gap, point before gap, point after gap, point boundary cases.
+    fn prepare_gap(&mut self) {
         if self.is_gap_start_before_point(){
             let quantity_characters_to_move = self.convert_user_index_to_gap_index(self.point) - self.gap_end;
             let bytes: Vec<u8> = self.buffer.drain(self.gap_end..self.gap_end + quantity_characters_to_move).collect();
@@ -99,6 +95,7 @@ impl GapBuffer {
         } else if self.is_gap_start_after_point() {
             let quantity_characters_to_move = self.gap_start - self.convert_user_index_to_gap_index(self.point);
             let bytes: Vec<u8> = self.buffer.drain(self.convert_user_index_to_gap_index(self.point)..self.gap_start).collect();
+
             self.gap_start -= quantity_characters_to_move;
             self.gap_end -= quantity_characters_to_move;
 
@@ -108,9 +105,23 @@ impl GapBuffer {
                 index += 1;
             }
         }
+    }
 
+    fn insert(&mut self, byte: u8) {
+        self.prepare_gap();
         self.gap_start += 1;
         self.buffer[self.point] = byte;
+    }
+
+    fn insert_bytes(&mut self, bytes: Vec<u8>) {
+        self.prepare_gap();
+
+        let mut index = self.point;
+        for byte in bytes {
+            self.buffer[index] = byte;
+            index += 1;
+            self.gap_start += 1;
+        }
     }
 
     fn is_gap_start_before_point(&self) -> bool {
@@ -119,16 +130,6 @@ impl GapBuffer {
 
     fn is_gap_start_after_point(&self) -> bool {
         self.gap_start > self.convert_user_index_to_gap_index(self.point)
-    }
-
-    // TODO: move the gap for insert, insert_bytes, remove, and remove_bytes.
-    fn insert_bytes(&mut self, mut index: usize, bytes: Vec<u8>) {
-        for byte in bytes {
-            self.buffer.insert(index, byte);
-            index += 1;
-        }
-
-        self.gap_start = index;
     }
 
     // TODO: move the gap for insert, insert_bytes, remove, and remove_bytes.
@@ -145,11 +146,8 @@ impl GapBuffer {
 impl fmt::Display for GapBuffer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut buffer_contents = std::str::from_utf8(&self.buffer).unwrap().to_owned();
-
-        // BUG: When initialized empty adding 1 onto the end of this range is too much.
-        // When the gap is at the end of the buffer it is not enough to include the last gap element.
-        // During insertion is the gap start being moved forward?
         let gap_range = self.gap_start..self.gap_end;
+
         buffer_contents.replace_range(gap_range, "");
 
         write!(f, "{}", buffer_contents)
@@ -200,7 +198,8 @@ the lazy dog.";
         let expected_string = TEST_STRING.to_owned() + &characters;
         let index = buffer.len();
 
-        buffer.insert_bytes(index, characters.into_bytes());
+        buffer.set_point(index);
+        buffer.insert_bytes(characters.into_bytes());
 
         assert!(buffer.capacity() > capacity_before_insertion);
         assert_eq!(buffer.to_string(), expected_string);
@@ -256,17 +255,52 @@ the lazy dog.";
         }
     }
 
+    struct BytesInsertionTestCase {
+        name: String,
+        characters: String,
+        index: usize,
+    }
+
     #[test]
-    fn insert_bytes_into_buffer() {
-        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
-        let characters = String::from("tan ");
-        let index = 10;
-        let mut expected_string = TEST_STRING.to_owned();
-        expected_string.insert_str(index, &characters);
+    fn insert_multiple_bytes() {
+        let test_cases = [
+            BytesInsertionTestCase {
+                name: "Insert 'foxy' into buffer midpoint".to_string(),
+                characters: "foxy".to_string(),
+                index: TEST_STRING.len() / 2,
+            },
+            BytesInsertionTestCase {
+                name: "Insert 'Look! ' into buffer lower boundary".to_string(),
+                characters: "Look! ".to_string(),
+                index: 0,
+            },
+            BytesInsertionTestCase {
+                name: "Insert 'Yeah.' into buffer upper boundary".to_string(),
+                characters: "Yeah.".to_string(),
+                index: TEST_STRING.len() - 1,
+            },
+            BytesInsertionTestCase {
+                name: "Insert 'tan' into lower half".to_string(),
+                characters: "tan".to_string(),
+                index: (TEST_STRING.len() / 2) / 2,
+            },
+            BytesInsertionTestCase {
+                name: "Insert 'slow' into upper half".to_string(),
+                characters: "slow".to_string(),
+                index: 40,
+            },
+        ];
 
-        buffer.insert_bytes(index, characters.into_bytes());
+        for test_case in test_cases.iter() {
+            let mut buffer = buffer_with_contents();
+            let mut expected_string = TEST_STRING.to_owned();
+            expected_string.insert_str(test_case.index, &test_case.characters);
 
-        assert_eq!(buffer.to_string(), expected_string);
+            buffer.set_point(test_case.index);
+            buffer.insert_bytes(test_case.characters.to_owned().into_bytes());
+
+            assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.name);
+        }
     }
 
     #[test]
