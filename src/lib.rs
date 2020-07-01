@@ -132,9 +132,10 @@ impl GapBuffer {
         self.gap_start > self.convert_user_index_to_gap_index(self.point)
     }
 
-    // TODO: move the gap for insert, insert_bytes, remove, and remove_bytes.
-    fn remove(&mut self, index: usize) -> u8 {
-        self.buffer.remove(index)
+    fn remove(&mut self) {
+        self.prepare_gap();
+        self.gap_start -= 1;
+        self.set_point(self.point - 1)
     }
 
     // TODO: move the gap for insert, insert_bytes, remove, and remove_bytes.
@@ -205,39 +206,39 @@ the lazy dog.";
         assert_eq!(buffer.to_string(), expected_string);
     }
 
-    struct InsertionTestCase {
-        test_name: String,
+    struct SingleByteTestCase {
+        name: String,
         character: u8,
-        insertion_index: usize,
+        index: usize,
     }
 
     #[test]
     fn insert_single_byte() {
         let test_cases = [
-            InsertionTestCase {
-                test_name: "insert 's' into buffer midpoint".to_string(),
+            SingleByteTestCase {
+                name: "insert 's' into buffer midpoint".to_string(),
                 character: 0x0073,
-                insertion_index: TEST_STRING.len() / 2,
+                index: TEST_STRING.len() / 2,
             },
-            InsertionTestCase {
-                test_name: "insert 't' into buffer lower boundary".to_string(),
+            SingleByteTestCase {
+                name: "insert 't' into buffer lower boundary".to_string(),
                 character: 0x0074,
-                insertion_index: 0,
+                index: 0,
             },
-            InsertionTestCase {
-                test_name: "insert 'q' into buffer upper boundary".to_string(),
+            SingleByteTestCase {
+                name: "insert 'q' into buffer upper boundary".to_string(),
                 character: 0x0071,
-                insertion_index: TEST_STRING.len() - 1,
+                index: TEST_STRING.len() - 1,
             },
-            InsertionTestCase {
-                test_name: "insert 'A' into buffer lower half".to_string(),
+            SingleByteTestCase {
+                name: "insert 'A' into buffer lower half".to_string(),
                 character: 0x0041,
-                insertion_index: (TEST_STRING.len() / 2) / 2
+                index: (TEST_STRING.len() / 2) / 2
             },
-            InsertionTestCase {
-                test_name: "insert 'S' into buffer upper half".to_string(),
+            SingleByteTestCase {
+                name: "insert 'S' into buffer upper half".to_string(),
                 character: 0x0053,
-                insertion_index: 40,
+                index: 40,
             },
         ];
 
@@ -246,12 +247,12 @@ the lazy dog.";
             let mut expected_string = TEST_STRING.to_owned();
             let byte = vec![test_case.character];
             let character = std::str::from_utf8(&byte).unwrap();
-            expected_string.insert_str(test_case.insertion_index, character);
+            expected_string.insert_str(test_case.index, character);
 
-            buffer.set_point(test_case.insertion_index);
+            buffer.set_point(test_case.index);
             buffer.insert(test_case.character);
 
-            assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.test_name);
+            assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.name);
         }
     }
 
@@ -304,14 +305,46 @@ the lazy dog.";
     }
 
     #[test]
-    fn remove_from_buffer() {
-        let n: u8 = 0x006e;
-        let mut buffer = GapBuffer::from(TEST_STRING.to_string());
-        let mut expected_string = TEST_STRING.to_owned();
-        expected_string.remove(14);
+    fn remove_single_byte() {
+        let test_cases = [
+            SingleByteTestCase {
+                name: "Remove 'x' from buffer midpoint".to_string(),
+                character: 0x0078,
+                index: 19,
+            },
+            SingleByteTestCase {
+                name: "Remove 'T' from the buffer lower boundary".to_string(),
+                character: 0x0054,
+                index: 1,
+            },
+            SingleByteTestCase {
+                name: "Remove '.' from the buffer upper boundary".to_string(),
+                character: 0x002e,
+                index: TEST_STRING.len() - 1,
+            },
+            SingleByteTestCase {
+                name: "Remove 'b' from the lower half".to_string(),
+                character: 0x0062,
+                index: 10,
+            },
+            SingleByteTestCase {
+                name: "Remove 'e' from the upper half".to_string(),
+                character: 0x0065,
+                index: 34,
+            },
+        ];
 
-        assert_eq!(buffer.remove(14), n);
-        assert_eq!(buffer.to_string(), expected_string);
+        for test_case in test_cases.iter() {
+            let mut buffer = buffer_with_contents();
+            let mut expected_string = TEST_STRING.to_owned();
+            expected_string.remove(test_case.index - 1);
+
+            buffer.set_point(test_case.index);
+            buffer.remove();
+
+            assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.name);
+            assert_eq!(buffer.get_point(), test_case.index - 1, "Test case: \"{}\" failed. Point not at index {}", test_case.name, test_case.index - 1);
+        }
     }
 
     #[test]
