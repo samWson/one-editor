@@ -111,6 +111,7 @@ impl GapBuffer {
         self.prepare_gap();
         self.gap_start += 1;
         self.buffer[self.point] = byte;
+        self.set_point(self.point + 1);
     }
 
     fn insert_bytes(&mut self, bytes: Vec<u8>) {
@@ -121,6 +122,7 @@ impl GapBuffer {
             self.buffer[index] = byte;
             index += 1;
             self.gap_start += 1;
+            self.set_point(self.point + 1);
         }
     }
 
@@ -253,6 +255,7 @@ the lazy dog.";
             buffer.insert(test_case.character);
 
             assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.name);
+            assert_eq!(buffer.get_point(), test_case.index + 1, "Test case: \"{}\" failed. Point not at index {}.", test_case.name, test_case.index + 1);
         }
     }
 
@@ -295,12 +298,14 @@ the lazy dog.";
         for test_case in test_cases.iter() {
             let mut buffer = buffer_with_contents();
             let mut expected_string = TEST_STRING.to_owned();
+            let count = test_case.characters.len();
             expected_string.insert_str(test_case.index, &test_case.characters);
 
             buffer.set_point(test_case.index);
             buffer.insert_bytes(test_case.characters.to_owned().into_bytes());
 
             assert_eq!(buffer.to_string(), expected_string, "Test case: \"{}\" failed.", test_case.name);
+            assert_eq!(buffer.get_point(), test_case.index + count, "Test case: \"{}\" failed. Point not at index {}", test_case.name, test_case.index + count);
         }
     }
 
